@@ -3,13 +3,18 @@ import src.DB_commands as db
 
 def main(args=None):
     con = db.connect()
-    cur = db.get_cursor(con)
+    cursor = db.get_cursor(con)
 
     db.create_table(con, f"""CREATE TABLE IF NOT EXISTS {args['product']} (
         {args['Desc']} TEXT NOT NULL,
-        {args['id']} INTEGER PRIMARY KEY,
+        {args['ID']} INTEGER PRIMARY KEY,
         {args['Expire Date']} TEXT NOT NULL,
-        quantity INTEGER NOT NULL
+        {args['Weight']} REAL NOT NULL,
+        {args['Batch']} TEXT NOT NULL,
+        {args['Manufacturer']} TEXT NOT NULL,
+        {args['Cost_Price']} REAL NOT NULL,
+        {args['Retail_Price']} REAL NOT NULL,
+        {args['VAT']} REAL NOT NULL
     );""")
     
 
