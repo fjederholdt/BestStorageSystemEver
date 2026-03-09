@@ -1,10 +1,8 @@
 import sqlite3
 
-data_base = "LetMilk.db"
-
 def connect():
     try:
-        con = sqlite3.connect(data_base)
+        con = sqlite3.connect("LetMilk.db")
         print("Connected to database successfully.")
         return con
     except:
