@@ -54,7 +54,7 @@ def add_product(data):
         data['Quantity'],
         data['Time_Stamp']
     ))
-    #cursor = db.get_cursor(con)
+
     db.commit(con)
     db.close_connection(con)
 
@@ -73,6 +73,6 @@ if __name__ == "__main__":
         "Quantity": 3,
         "Time_Stamp": "09-03-2026: 14:00"
     }
-    #data = int(sys.argv[1]")
+    #data = sys.argv[1]
 
     add_product(data)
