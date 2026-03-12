@@ -70,7 +70,6 @@ def insert_data(con,insert_sql):
         try:
             c = get_cursor(con)
             for (insert,data) in insert_sql:
-                print(insert,data)
                 c.execute(insert,data)
             print("All data inserted")
         except Exception as e:
