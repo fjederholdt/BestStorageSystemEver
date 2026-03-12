@@ -28,15 +28,16 @@
             <tr>
 
                  
+                {%- for i in range(0, 10) %} 
                 <tr>
-                    {%- for column in columns[table] %} 
+                {%- for column in columns[table] %} 
                 
-                {%- for i in range(30) %}
                             <td>{{ total_data[column][i] }}</td>
                             
-                            {%- endfor %}
+                            
                             {%- endfor %}
                         </tr>
+                        {%- endfor %}
                         
             </tr>
 

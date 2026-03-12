@@ -63,6 +63,14 @@ def all_columns(con):
         result[tbl] = cols
     return result
 
+def get_tables_and_columns(schema):
+    tables = []
+    columns = {}
+    for table, column in schema.items():
+        tables.append(table)
+        columns[table] = column
+    return tables, columns
+
 def insert_data(con,insert_sql):
     if con is not None:
         try:

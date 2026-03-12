@@ -7,23 +7,10 @@ app = Flask(__name__)
 @app.route("/")
 def home():
     con = db.connect()
-    cursor = db.get_cursor(con)
-    schema = db.all_columns(con)
-    tables = []
-    columns = {}
-    column_sizes = {}
-    total_data = [],[],[]
-    for table, column in schema.items():
-        tables.append(table)
-        columns[table] = column
-        column_sizes[table] = len(column)
-        for item in column:
-            cursor.execute(f"SELECT {item} FROM {table}")
-            data = cursor.fetchall()
-            total_data[item] = data
-
+    tables, columns = db.get_tables_and_columns(db.all_columns(con))
+    total_data = db.get_all_data(con)
     db.close_connection(con)
-    return render_template("index.html", tables=tables, columns=columns, column_sizes=column_sizes, total_data=total_data )
+    return render_template("index.html", tables=tables, columns=columns, total_data=total_data )
 
 fast_app = FastAPI()
 
@@ -35,7 +22,7 @@ def get_item():
 def insert_item():
     return  "Item created successfully"
 
-@fast_app.put()
+@fast_app.put("/")
 def update_item():
     return "Item updated successfully"
 
