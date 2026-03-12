@@ -110,6 +110,8 @@ def get_all_data(con):
         for item in column:
             cursor.execute(f"SELECT {item} FROM {table}")
             data = cursor.fetchall()
-
-            total[item] = data
+            cur_data = []
+            for i in data:
+                cur_data.append(i[0])
+            total[item] = cur_data
     return total
