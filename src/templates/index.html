@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Best Storage System Ever</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<h1>Database Table Viewer</h1>
+<!--
+<div class="controls">
+     <button onclick="loadDatabase('database1.db')">Use Database 1</button> 
+</div>-->
+
+<table id="dataTable", >
+    {%- for table in tables %}
+    <td>{{ table }}
+        <table>      
+            <tr>    
+                {%- for column in columns[table] %} 
+                
+                <th>{{ column }}</th>
+                
+                {%- endfor %}
+            </tr>
+            <tr>
+
+                 
+                <tr>
+                    {%- for column in columns[table] %} 
+                
+                {%- for i in range(30) %}
+                            <td>{{ total_data[column][i] }}</td>
+                            
+                            {%- endfor %}
+                            {%- endfor %}
+                        </tr>
+                        
+            </tr>
+
+            
+        </table>        
+    </td>
+                
+        
+    {%- endfor %}
+</table>
+<!-- 
+<script>
+function loadDatabase(dbName){
+    
+    fetch("/GET")
+    console.log("Selected database:", dbName);
+
+    // Example mock data (replace with API request)
+    const data = [
+        {id:1, name:"Alice", email:"alice@email.com"},
+        {id:2, name:"Bob", email:"bob@email.com"},
+        {id:3, name:"Charlie", email:"charlie@email.com"}
+    ];
+
+    const tableBody = document.querySelector("#dataTable tbody");
+    tableBody.innerHTML = "";
+
+    data.forEach(row=>{
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${row.id}</td>
+            <td>${row.name}</td>
+            <td>${row.email}</td>
+        `;
+
+        tableBody.appendChild(tr);
+    });
+}
+</script> -->
+
+</body>
+</html>

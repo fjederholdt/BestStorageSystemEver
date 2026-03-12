@@ -51,3 +51,16 @@ def insert_table(con, insert_sql, data):
             print(f"Error inserting data: {e}")
     else:
         print("No connection to database to insert data.")
+
+def all_columns(con):
+    c = get_cursor(con)
+    c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    tables = [r[0] for r in c.fetchall()]
+ 
+    result = {}
+    for tbl in tables:
+        c.execute(f"PRAGMA table_info({tbl!r})")
+        cols = [row[1] for row in c.fetchall()]
+        result[tbl] = cols
+ 
+    return result
