@@ -56,14 +56,20 @@ def all_columns(con):
     c = get_cursor(con)
     c.execute("SELECT name FROM sqlite_master WHERE type='table'")
     tables = [r[0] for r in c.fetchall()]
-
     result = {}
     for tbl in tables:
         c.execute(f"PRAGMA table_info({tbl!r})")
         cols = [row[1] for row in c.fetchall()]
         result[tbl] = cols
-
     return result
+
+def get_tables_and_columns(schema):
+    tables = []
+    columns = {}
+    for table, column in schema.items():
+        tables.append(table)
+        columns[table] = column
+    return tables, columns
 
 def insert_data(con,insert_sql):
     if con is not None:
