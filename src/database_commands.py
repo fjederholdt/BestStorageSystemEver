@@ -78,10 +78,13 @@ def insert_data(con,insert_sql):
             for (insert,data) in insert_sql:
                 c.execute(insert,data)
             print("All data inserted")
+            return True
         except Exception as e:
             print(f"Error inserting data: {e}")
+            return False
     else:
         print("No connection to database to insert data.")
+        return False
 
 def get_insert(con, data):
     schema = all_columns(con)
