@@ -35,7 +35,7 @@ def get_item():
 def insert_item():
     return  "Item created successfully"
 
-fast_app.put()
+@fast_app.put()
 def update_item():
     return "Item updated successfully"
 
