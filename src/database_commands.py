@@ -56,11 +56,60 @@ def all_columns(con):
     c = get_cursor(con)
     c.execute("SELECT name FROM sqlite_master WHERE type='table'")
     tables = [r[0] for r in c.fetchall()]
- 
     result = {}
     for tbl in tables:
         c.execute(f"PRAGMA table_info({tbl!r})")
         cols = [row[1] for row in c.fetchall()]
         result[tbl] = cols
- 
     return result
+
+def insert_data(con,insert_sql):
+    if con is not None:
+        try:
+            c = get_cursor(con)
+            for (insert,data) in insert_sql:
+                c.execute(insert,data)
+            print("All data inserted")
+        except Exception as e:
+            print(f"Error inserting data: {e}")
+    else:
+        print("No connection to database to insert data.")
+
+def get_insert(con, data):
+    schema = all_columns(con)
+    table_data = []
+
+    for table, cols in schema.items():
+        sql_string = []
+        col_data = []
+        sql_full_string = ""
+
+        sql_string.append(f"INSERT INTO {table} (")
+
+        for col in cols[:-1]:
+            sql_string.append(f"{col},")
+            col_data.append(data[col])
+        sql_string.append(f"{cols[-1]}")
+        col_data.append(data[cols[-1]])
+        
+        sql_string.append(f") VALUES ({"?, " * (len(cols)-1)}?);")
+        for string in sql_string:
+            sql_full_string += str(string)
+
+        table_data.append((sql_full_string,col_data))
+    
+    return table_data
+
+def get_all_data(con):
+    total = {}
+    cursor = get_cursor(con)
+    schema = all_columns(con)
+    for table, column in schema.items():
+        for item in column:
+            cursor.execute(f"SELECT {item} FROM {table}")
+            data = cursor.fetchall()
+            cur_data = []
+            for i in data:
+                cur_data.append(i[0])
+            total[item] = cur_data
+    return total
