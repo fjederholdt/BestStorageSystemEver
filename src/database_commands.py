@@ -192,45 +192,41 @@ def delete_by_column(con, table, col, val, _visited=None):
     cursor.execute(f"DELETE FROM {table} WHERE {col} = ?", (val,))
     commit(con)
 
-############ Get data functions ##############
 
-# Get all data for a specific item in a specific table that has a column matching the specified name and value
-def get_all_data_for_item(con, table, column, value):
+def get_table(con,table):
+    data = []
     cursor = get_cursor(con)
-    cursor.execute(f"SELECT * FROM {table} WHERE {column} = ?", (value,))
-    data = cursor.fetchall()
+    cursor.execute(f"SELECT * FROM {table}")
+    temp_data = cursor.fetchall()
+    for d in temp_data:
+        data.append(d[0])
     return data
 
-# Get all data for a specific item across all tables that have a column matching the specified name and value
-def get_all_data_for_item_from_all_tables(con, column, value):
+def get_column(con,table,column):
+    data = []
     cursor = get_cursor(con)
-    schema = all_columns(con)
-    total = {}
-    for table, columns in schema.items():
-        if column in columns:
-            cursor.execute(f"SELECT * FROM {table} WHERE {column} = ?", (value,))
-            data = cursor.fetchall()
-            total[table] = data
-    return total
+    cursor.execute(f"SELECT {column} FROM {table}")
+    temp_data = cursor.fetchall()
+    for d in temp_data:
+        data.append(d[0])
+    return data
 
-####### post data functions ##############
-
-# Change the value of a specific column for a specific item across all tables that have that column
-def change_value_for_item_all_tables(con, column, old_value, new_value):
+def get_id(con,table,column,id):
+    data = []
     cursor = get_cursor(con)
-    schema = all_columns(con)
-    for table, columns in schema.items():
-        if column in columns:
-            try:
-                cursor.execute(f"UPDATE {table} SET {column} = ? WHERE {column} = ?", (new_value, old_value))
-                commit(con)
-                cursor.execute(f"SELECT * FROM {table} WHERE {column} = ?", (new_value,))
-                data = cursor.fetchall()
-                print(f"Updated table '{table}': {data}")
-            except Exception as e:
-                print(f"Error updating table '{table}': {e}")
-
-#con = connect()
-#change_value_for_item_all_tables(con, "Product_ID", "12131", "12130")
-#commit(con)
-#close_connection(con)
+    cursor.execute(f"SELECT * FROM {table} WHERE {column} = '{id}'")
+    temp_data = cursor.fetchall()
+    for d in temp_data:
+        data.append(d)
+    return data
+  
+def update(con,table,column,val,col_id,val_id):
+    if con is not None:
+        try:
+            cursor = get_cursor(con)
+            cursor.execute(f"UPDATE {table} SET {column} = {val} where {col_id} = {val_id}")
+            commit(con)
+        except Exception as e:
+            print(f"Error updating: {e}")
+    else:
+        print("No connection to database while updating")
