@@ -124,7 +124,7 @@ def get_all_data(con):
                 cur_data.append(i[0])
             total[item] = cur_data
     return total
-  
+
 ############## Deletion functions ##############        
 def delete_all_data(con):
     cursor = get_cursor(con)
@@ -183,42 +183,7 @@ def delete_by_column(con, table, col, val, _visited=None):
     cursor = get_cursor(con)
     cursor.execute(f"DELETE FROM {table} WHERE {col} = ?", (val,))
     commit(con)
-
-
-def get_table(con,table):
-    data = []
-    cursor = get_cursor(con)
-    cursor.execute(f"SELECT * FROM {table}")
-    temp_data = cursor.fetchall()
-    for d in temp_data:
-        data.append(d[0])
-    return data
-
-def get_column(con,table,column):
-    data = []
-    cursor = get_cursor(con)
-    cursor.execute(f"SELECT {column} FROM {table}")
-    temp_data = cursor.fetchall()
-    for d in temp_data:
-        data.append(d[0])
-    return data
-
-def get_id(con,table,column,id):
-    data = []
-    cursor = get_cursor(con)
-    cursor.execute(f"SELECT * FROM {table} WHERE {column} = '{id}'")
-    temp_data = cursor.fetchall()
-    for d in temp_data:
-        data.append(d)
-    return data
-  
-def update(con,table,column,val,col_id,val_id):
-    if con is not None:
-        try:
-            cursor = get_cursor(con)
-            cursor.execute(f"UPDATE {table} SET {column} = {val} where {col_id} = {val_id}")
-            commit(con)
-        except Exception as e:
-            print(f"Error updating: {e}")
-    else:
-        print("No connection to database while updating")
+    
+#con = connect()
+#delete_by_column(con, "Product_Table", "Product_NAME", "Soy Milk")
+#close_connection(con)
