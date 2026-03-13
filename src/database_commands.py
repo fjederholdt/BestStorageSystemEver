@@ -71,6 +71,14 @@ def get_tables_and_columns(schema):
         columns[table] = column
     return tables, columns
 
+def get_column_data_type(con, table, column):
+    c = get_cursor(con)
+    c.execute(f"PRAGMA table_info({table!r})")
+    cols = c.fetchall()
+    for col in cols:
+        if col[1] == column:
+            return col[2]
+    
 def insert_data(con,insert_sql):
     if con is not None:
         try:
