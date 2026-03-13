@@ -15,8 +15,19 @@ def home():
 fast_app = FastAPI()
 
 @fast_app.get("/")
-def get_item():
-    return {"msg": "Hello World"}
+def get_item(table=None,column=None,id=None):
+    print(table,column,id)
+    con = db.connect()
+
+    if id is not None:
+        data = db.get_id(con, table, column,id)
+    elif column is not None:
+        data = db.get_column(con, table, column)
+    elif table is not None:
+        data = db.get_table(con, table)
+
+    db.close_connection(con)
+    return data
 
 @fast_app.post("/")
 def insert_item(data):
@@ -27,7 +38,10 @@ def insert_item(data):
     return  succes
 
 @fast_app.put("/")
-def update_item():
+def update_item(data): #For data structure as list with [table, column, value,column_identifier, value_identifier]
+    con = db.connect()
+    db.update(con,data[0],data[1],data[2],data[3],data[4]) #for dict: db.update(con,data['table'],data['column'],data['value'],data['column_id'],data['val_id'])
+    db.close_connection(con)
     return "Item updated successfully"
 
 @fast_app.delete("/")
@@ -36,3 +50,4 @@ def delete_item():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
