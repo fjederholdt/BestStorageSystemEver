@@ -124,3 +124,14 @@ def get_all_data(con):
                 cur_data.append(i[0])
             total[item] = cur_data
     return total
+
+def update(con,table,column,val,col_id,val_id):
+    if con is not None:
+        try:
+            cursor = get_cursor(con)
+            cursor.execute(f"UPDATE {table} SET {column} = {val} where {col_id} = {val_id}")
+            commit(con)
+        except Exception as e:
+            print(f"Error updating: {e}")
+    else:
+        print("No connection to database while updating")
