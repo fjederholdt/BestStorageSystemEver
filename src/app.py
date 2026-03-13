@@ -15,8 +15,19 @@ def home():
 fast_app = FastAPI()
 
 @fast_app.get("/")
-def get_item():
-    return {"msg": "Hello World"}
+def get_item(table=None,column=None,id=None):
+    print(table,column,id)
+    con = db.connect()
+
+    if id is not None:
+        data = db.get_id(con, table, column,id)
+    elif column is not None:
+        data = db.get_column(con, table, column)
+    elif table is not None:
+        data = db.get_table(con, table)
+
+    db.close_connection(con)
+    return data
 
 @fast_app.post("/")
 def insert_item():

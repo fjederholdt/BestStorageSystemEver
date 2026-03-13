@@ -121,3 +121,30 @@ def get_all_data(con):
                 cur_data.append(i[0])
             total[item] = cur_data
     return total
+
+def get_table(con,table):
+    data = []
+    cursor = get_cursor(con)
+    cursor.execute(f"SELECT * FROM {table}")
+    temp_data = cursor.fetchall()
+    for d in temp_data:
+        data.append(d[0])
+    return data
+
+def get_column(con,table,column):
+    data = []
+    cursor = get_cursor(con)
+    cursor.execute(f"SELECT {column} FROM {table}")
+    temp_data = cursor.fetchall()
+    for d in temp_data:
+        data.append(d[0])
+    return data
+
+def get_id(con,table,column,id):
+    data = []
+    cursor = get_cursor(con)
+    cursor.execute(f"SELECT * FROM {table} WHERE {column} = '{id}'")
+    temp_data = cursor.fetchall()
+    for d in temp_data:
+        data.append(d)
+    return data
