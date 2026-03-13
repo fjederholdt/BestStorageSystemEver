@@ -19,8 +19,12 @@ def get_item():
     return {"msg": "Hello World"}
 
 @fast_app.post("/")
-def insert_item():
-    return  "Item created successfully"
+def insert_item(data):
+    con = db.connect()
+    insert = db.get_insert(data)
+    succes = db.insert_data(insert)
+    db.close_connection(con)
+    return  succes
 
 @fast_app.put("/")
 def update_item():
