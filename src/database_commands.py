@@ -1,9 +1,11 @@
 import sqlite3
+import os
 
 def connect():
+    db_path = os.path.join(os.getcwd(),"Database",os.listdir(os.path.join(os.getcwd(),"Database"))[0])
     try:
-        con = sqlite3.connect("LetMilk.db")
-        print("Connected to database successfully.")
+        con = sqlite3.connect(db_path)
+        print(f"Connected to {db_path} successfully.")
         return con
     except:
         print("Connection to database failed.")
