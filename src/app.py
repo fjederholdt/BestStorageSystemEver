@@ -1,3 +1,5 @@
+from unittest import case
+
 import database_commands as db
 from flask import Flask, render_template
 from flask_restx import Api, Resource, fields
@@ -21,6 +23,63 @@ api = Api(
     description="API for the best storage system ever",
     doc="/docs"
 )
+
+def create_api_methods():
+    @app.get("/")
+    def get_items(table):
+        ''' Get all items from the table in the database, and return them as a JSON object.'''
+        con = db.connect()
+        result = db.get_table(con, table)
+        db.close_connection(con)
+        return result
+
+    @app.get("/primary_key")
+    def get_item(table, primary_key):
+        ''' Get a single item with the specified ID from the table in the database, and return it as a JSON object.'''
+        con = db.connect()
+        result = db.get_id(con, table, primary_key)
+        db.close_connection(con)
+        return result
+
+    @app.post("/")
+    def post_item(data):
+        ''' Create a new item with the specified ID in the table in the database, and return it as a JSON object.'''
+        con = db.connect()
+        result = db.insert_data(db.get_insert(con, data))
+        db.close_connection(con)
+        return result
+
+    @app.delete("/")
+    def delete_items(table):
+        ''' Delete all items from the table in the database, and return a success message.'''
+        con = db.connect()
+        result = db.delete_table_data(con, table)
+        db.close_connection(con)
+        return result
+    
+    @app.delete("/primary_key")
+    def delete_item(table, primary_key, data):
+        ''' Delete a single item with the specified ID from the table in the database, and return a success message.'''
+        con = db.connect()
+        result = db.delete_id(con, table, primary_key, data)
+        db.close_connection(con)
+        return result
+
+    @app.put("/")
+    def update_item(table, column, column_value, primary_key, data):
+        ''' Update a single item with the specified ID in the table in the database, and return it as a JSON object.'''
+        con = db.connect()
+        result = db.update(con, table=table, column=column, val=column_value, primary_key=primary_key, val_id=data)
+        db.close_connection(con)
+        return result
+    
+    @app.get("/column")
+    def get_column_data(table, column, data):
+        ''' Get all data from the column in the table in the database, and return it as a JSON object.'''
+        con = db.connect()
+        result = db.get_column(con, table, data)
+        db.close_connection(con)
+        return result
 
 ''' Create the API documentation for all the tables and columns in the database.'''
 def create_docs():
@@ -47,38 +106,57 @@ def create_docs():
         class ItemList(Resource):
 
             @namespace.marshal_list_with(model)
-            def get(self):
-                """Get all items"""
-                return "test"
-
+            def get(self, table):
+                ''' Get all items from the table in the database, and return them as a JSON object.'''
+                return db.get_table(con, table)
+        
             @namespace.expect(model)
             @namespace.marshal_with(model, code=201)
             def post(self):
-                """Create a new item"""
-                item = api.payload
-                return item, 201
+                ''' Create a new item with the specified ID in the table in the database, and return it as a JSON object.'''
+                data = api.payload
+                return db.insert_data(db.get_insert(con, data)), 201
+
+            @namespace.expect(model)
+            @namespace.marshal_list_with(model)
+            def delete(self, table):
+                ''' Delete all items from the table in the database, and return a success message.'''
+                return db.delete_table_data(con, table)
+
+
+
+            @namespace.route("/primary_key")
+            class ItemList(Resource):
             
-            #TODO: Add put and delete endpoints for each table in the database.
+                @namespace.marshal_list_with(model)
+                def get(self, table, column, primary_key):
+                    ''' Get a single item with the specified ID from the table in the database, and return it as a JSON object.'''
+                    return db.get_id(con, table, column, primary_key)
+
+                @namespace.expect(model)
+                @namespace.marshal_list_with(model, code=202)
+                def put(self, table, column, column_val, primary_key, val_id):
+                    ''' Update a single item with the specified ID in the table in the database, and return it as a JSON object.'''
+                    return db.update(con, table=table, column=column, val=column_val, primary_key=primary_key, val_id=val_id), 202
+
+                @namespace.expect(model)
+                @namespace.marshal_list_with(model)
+                def delete(self, table, column, primary_key):
+                    ''' Delete a single item with the specified ID from the table in the database, and return a success message.'''
+                    return db.delete_id(con, table, column, primary_key)
+                
+            @namespace.route("/column")
+            class ItemList(Resource):
+                
+                @namespace.marshal_list_with(model)
+                def get(self, table, column):
+                    ''' Get all data from the column in the table in the database, and return it as a JSON object.'''
+                    return db.get_column(con, table, column)
     
     db.close_connection(con)
 
-
-@app.get("/")
-def get_item():
-    return {"msg": "Hello World"}
-
-@app.post("/")
-def post_item():
-    return  "Item created successfully"
-
-@app.put("/")
-def update_item():
-    return "Item updated successfully"
-
-@app.delete("/")
-def delete_item():
-    return "Item deleted successfully"
-
+''' Call the function to create the API methods for all the tables and columns in the database.'''
+create_api_methods()
 ''' Call the function to create the API documentation for all the tables and columns in the database.'''
 create_docs()
 
