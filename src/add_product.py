@@ -1,4 +1,4 @@
-import DB_commands as db
+import database_commands as db
 
 def add_product(data):
     con = db.connect()

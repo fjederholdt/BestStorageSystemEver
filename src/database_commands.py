@@ -86,10 +86,13 @@ def insert_data(con,insert_sql):
             for (insert,data) in insert_sql:
                 c.execute(insert,data)
             print("All data inserted")
+            return True
         except Exception as e:
             print(f"Error inserting data: {e}")
+            return False
     else:
         print("No connection to database to insert data.")
+        return False
 
 def get_insert(con, data):
     schema = all_columns(con)
@@ -129,3 +132,101 @@ def get_all_data(con):
                 cur_data.append(i[0])
             total[item] = cur_data
     return total
+  
+############## Deletion functions ##############        
+def delete_all_data(con):
+    cursor = get_cursor(con)
+    schema = all_columns(con)
+    for table, column in schema.items():
+        cursor.execute(f"DELETE FROM {table}")
+    commit(con)
+        
+def get_primary_key(con, table):
+    cursor = get_cursor(con)
+    cursor.execute(f"PRAGMA table_info({table})")
+    for row in cursor.fetchall():
+        if row[5] == 1: # PK column has 1 in the 6th position of the PRAGMA output
+            return row[1]
+    return "ID"
+ 
+def get_connected_tables(con, parent_table): # Find tables that have a foreign key referencing the parent_table
+    schema = all_columns(con)
+    reference = []
+    for table, columns in schema.items():
+        cursor = get_cursor(con)
+        cursor.execute(f"PRAGMA foreign_key_list({table})")
+        for row in cursor.fetchall():
+            if row[2] == parent_table:
+                reference.append((table, row[3], row[4])) # row[3] is the column in the child table that references the parent table, row[4] is the column in the parent table that is referenced
+       
+    return reference
+ 
+def get_mathing_ids(con, table, col, val):
+    cursor = get_cursor(con)
+    pk_column = get_primary_key(con, table)
+    cursor.execute(f"SELECT {pk_column} FROM {table} WHERE {col} = ?", (val,))
+    ids = [row[0] for row in cursor.fetchall()]
+    return ids, pk_column
+
+# how to delete by column value with cascade delete across all related tables, works for any DBc
+def delete_by_column(con, table, col, val, _visited=None):
+    if _visited is None:
+        _visited = set() # to avoid infinite recursion in case of circular references
+    visit_key = (table, col, str(val))
+    if visit_key in _visited:
+        return
+    _visited.add(visit_key)
+#    # Find all tables that reference this table
+
+    references = get_connected_tables(con, table)   
+    for ref_table, ref_col, parent_col in references:
+        # Find matching IDs in the parent table
+        ids, pk_column = get_mathing_ids(con, table, col, val)
+        if not ids:
+            continue
+        # For each matching ID, delete from the referencing table
+        for id in ids:
+            delete_by_column(con, ref_table, ref_col, id, _visited) # recursive call to delete from child tables
+    # Finally, delete from the original table
+    cursor = get_cursor(con)
+    cursor.execute(f"DELETE FROM {table} WHERE {col} = ?", (val,))
+    commit(con)
+
+
+def get_table(con,table):
+    data = []
+    cursor = get_cursor(con)
+    cursor.execute(f"SELECT * FROM {table}")
+    temp_data = cursor.fetchall()
+    for d in temp_data:
+        data.append(d[0])
+    return data
+
+def get_column(con,table,column):
+    data = []
+    cursor = get_cursor(con)
+    cursor.execute(f"SELECT {column} FROM {table}")
+    temp_data = cursor.fetchall()
+    for d in temp_data:
+        data.append(d[0])
+    return data
+
+def get_id(con,table,column,id):
+    data = []
+    cursor = get_cursor(con)
+    cursor.execute(f"SELECT * FROM {table} WHERE {column} = '{id}'")
+    temp_data = cursor.fetchall()
+    for d in temp_data:
+        data.append(d)
+    return data
+  
+def update(con,table,column,val,col_id,val_id):
+    if con is not None:
+        try:
+            cursor = get_cursor(con)
+            cursor.execute(f"UPDATE {table} SET {column} = {val} where {col_id} = {val_id}")
+            commit(con)
+        except Exception as e:
+            print(f"Error updating: {e}")
+    else:
+        print("No connection to database while updating")
