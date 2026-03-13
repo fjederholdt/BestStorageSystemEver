@@ -79,6 +79,13 @@ def update_item():
 def delete_item():
     return "Item deleted successfully"
 
+@app.reserve("/")
+def reserve_item(table, column, id):
+    # First move item to reserved db
+    # inbetween, put/update stock 
+    # Third thats it
+    return "Done"
+
 ''' Call the function to create the API documentation for all the tables and columns in the database.'''
 create_docs()
 

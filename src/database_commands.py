@@ -48,6 +48,7 @@ def insert_table(con, insert_sql, data):
         try:
             c = get_cursor(con)
             c.execute(insert_sql, data)
+            commit(con)
             print("Data inserted successfully.")
         except Exception as e:
             print(f"Error inserting data: {e}")
@@ -96,28 +97,37 @@ def insert_data(con,insert_sql):
         print("No connection to database to insert data.")
         return False
 
+def get_insert_cols(table,cols,data):
+    sql_string = []
+    col_data = []
+    sql_full_string = ""
+
+    sql_string.append(f"INSERT INTO {table} (")
+
+    for col in cols[:-1]:
+        sql_string.append(f"{col},")
+        col_data.append(data[col])
+    sql_string.append(f"{cols[-1]}")
+    col_data.append(data[cols[-1]])
+        
+    sql_string.append(f") VALUES ({"?, " * (len(cols)-1)}?);")
+    for string in sql_string:
+        sql_full_string += str(string)
+
+    return(sql_full_string,col_data)
+
+def get_tables_insert(con,tables):
+    #get tables data, get insert with data for table
+
+    for table in tables:
+        print(f"{table}:",get_table(con,table))
+
 def get_insert(con, data):
     schema = all_columns(con)
     table_data = []
 
     for table, cols in schema.items():
-        sql_string = []
-        col_data = []
-        sql_full_string = ""
-
-        sql_string.append(f"INSERT INTO {table} (")
-
-        for col in cols[:-1]:
-            sql_string.append(f"{col},")
-            col_data.append(data[col])
-        sql_string.append(f"{cols[-1]}")
-        col_data.append(data[cols[-1]])
-        
-        sql_string.append(f") VALUES ({"?, " * (len(cols)-1)}?);")
-        for string in sql_string:
-            sql_full_string += str(string)
-
-        table_data.append((sql_full_string,col_data))
+        table_data.append(get_insert_cols(table,cols,data))
     
     return table_data
 
@@ -232,3 +242,71 @@ def update(con,table,column,val,col_id,val_id):
             print(f"Error updating: {e}")
     else:
         print("No connection to database while updating")
+
+def connect_reserved_db():
+    try:
+        con = sqlite3.connect(os.path.join(os.getcwd(),"Reserved","Reserved.db"))
+        print("Connected to database successfully.")
+        return con
+    except:
+        print("Connection to database failed.")
+        return None
+    
+def create_transit_table(con,prim_key,data_type):
+    create_table(con,f"""CREATE TABLE IF NOT EXISTS Transit_Table (
+        {prim_key} {data_type} PRIMARY KEY,
+        Status TEXT NOT NULL,
+        Quantity INTEGER NOT NULL,
+        From_Location TEXT NOT NULL,
+        To_Location TEXT NOT NULL
+                                    );""")
+    commit(con)
+
+def insert_transit_table(con,data):
+    schema = all_columns(con)
+    for table,columns in schema.items():
+        if table == "Transit_Table":
+            (sql, col_data) = get_insert_cols(table,columns,data)
+            insert_table(con,sql,col_data)
+    return 1
+
+# tables: All the tables from which data needs to be transfered
+# prim_key : Probably primary key for identification
+# quantity: Quantity of the item to reserve
+def reserve_data(con,tables,prim_key,prim_key_val,quantity,from_loc,to_loc):
+    data = {};data[prim_key] = prim_key_val;data["Status"] = "Reserved"
+    data["Quantity"] = quantity;data["From_Location"] = from_loc
+    data["To_Location"] = to_loc
+    res_con = connect_reserved_db()
+
+    insert_data(res_con,get_insert(con,tables))
+
+    #Make sure someone does the put call to update the quantity, Does this has to be done from gui?!?!?!
+    
+    if type(prim_key_val) is int:
+        data_type = "INTEGER"
+    elif type(prim_key_val) is str:
+        data_type = "TEXT"
+    elif type(prim_key_val) is float:
+        data_type = "REAL"
+    else:
+        print("No datatype")
+        quit()
+            
+
+    create_transit_table(res_con,prim_key,data_type)
+    insert_transit_table(res_con,data)
+    close_connection(res_con)
+
+    return 1
+
+con = connect()
+ts = ["Product_Table","Barcode_Table"]
+p_k = "Product_ID"
+pk_val = 12132
+quan = 5
+from_l = "LetMilk"
+to_l  = "myself"
+
+reserve_data(con,ts,p_k,pk_val,quan,from_l,to_l)
+close_connection(con)
