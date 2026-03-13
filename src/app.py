@@ -4,6 +4,7 @@ from flask_restx import Api, Resource, fields
 
 app = Flask(__name__)
 
+''' Create the homepage for the API, which will display all the tables and columns in the database, as well as all the data in the database. '''
 @app.route("/")
 def home():
     con = db.connect()
@@ -12,6 +13,7 @@ def home():
     db.close_connection(con)
     return render_template("index.html", tables=tables, columns=columns, total_data=total_data )
 
+''' Create the API to handle docs and all the endpoints for the API.'''
 api = Api(
     app,
     title="Best Storage System Ever API",
@@ -20,14 +22,16 @@ api = Api(
     doc="/docs"
 )
 
+''' Create the API documentation for all the tables and columns in the database.'''
 def create_docs():
     con = db.connect()
     tables, columns = db.get_tables_and_columns(db.all_columns(con))
-    namespaces = []
     for table in tables:
+        ''' Create a namespace for each table in the database, and create a model for each column in the table.'''
         namespace = api.namespace(table, description=f"Operations related to {table} in the storage system")
         model_fields = {}
         for column in columns[table]:
+            ''' Get the data type of the column, and create a model field for it.'''
             data_type = db.get_column_data_type(con, table, column)
             match data_type:
                 case "INTEGER":
@@ -38,6 +42,7 @@ def create_docs():
                     model_fields[column] = fields.String(required=True, description=f"{column} of {table}")
         model = api.model(table, model_fields)
 
+        ''' Create the endpoints for each table in the database, and use the model to validate the input data.'''
         @namespace.route("/")
         class ItemList(Resource):
 
@@ -53,6 +58,8 @@ def create_docs():
                 item = api.payload
                 return item, 201
             
+            #TODO: Add put and delete endpoints for each table in the database.
+    
     db.close_connection(con)
 
 
@@ -72,132 +79,8 @@ def update_item():
 def delete_item():
     return "Item deleted successfully"
 
-
+''' Call the function to create the API documentation for all the tables and columns in the database.'''
 create_docs()
-
-# product_ns = api.namespace("Products", description="Operations related to products in the storage system")
-
-# # Define schema (this becomes the OpenAPI model)
-# product_model = api.model("Product", {
-#     "Product_ID": fields.Integer(readOnly=True, description="Product ID"),
-#     "Product_NAME": fields.String(required=True, description="Product name"),
-#     "Product_Brand": fields.String(required=True, description="Product brand"),
-#     "Product_Category": fields.String(required=True, description="Product category"),
-#     "Product_Weight": fields.Float(required=True, description="Product weight"),
-# })
-
-# barcode_ns = api.namespace("Barcodes", description="Operations related to barcodes in the storage system")
-# barcode_model = api.model("Barcode", {
-#     "Barcode_ID": fields.Integer(readOnly=True, description="Barcode ID"),
-#     "Product_ID": fields.Integer(required=True, description="Associated Product ID"),
-# })
-
-# storage_ns = api.namespace("Storage", description="Operations related to storage in the storage system")
-# storage_model = api.model("Storage", {
-#     "Product_ID": fields.Integer(required=True, description="Associated Product ID"),
-#     "Storage_ID": fields.Integer(readOnly=True, description="Storage ID"),
-#     "Stock": fields.Integer(required=True, description="Stock quantity"),
-# })
-
-# price_ns = api.namespace("Prices", description="Operations related to prices in the storage system")
-# price_model = api.model("Price", {
-#     "Product_ID": fields.Integer(required=True, description="Associated Product ID"),
-#     "Price": fields.Float(required=True, description="Product price"),
-# })
-
-# sales_ns = api.namespace("Sales", description="Operations related to sales in the storage system")
-# sales_model = api.model("Sales", {
-#     "Product_ID": fields.Integer(required=True, description="Associated Product ID"),
-#     "Sales_ID": fields.Integer(readOnly=True, description="Sales ID"),
-#     "Quantity": fields.Integer(required=True, description="Quantity sold"),
-#     "Time_Stamp": fields.DateTime(required=True, description="Timestamp of sale"),
-# })
-
-    
-
-
-# @product_ns.route("/")
-# class ItemList(Resource):
-
-#     @product_ns.marshal_list_with(product_model)
-#     def get(self):
-#         """Get all items"""
-#         return
-
-#     @product_ns.expect(product_model)
-#     @product_ns.marshal_with(product_model, code=201)
-#     def post(self):
-#         """Create a new item"""
-#         item = api.payload
-#         return item, 201
-
-# @barcode_ns.route("/")
-# class ItemList(Resource):
-
-#     @barcode_ns.marshal_list_with(barcode_model)
-#     def get(self):
-#         """Get all items"""
-#         return get_item()
-
-#     @barcode_ns.expect(barcode_model)
-#     @barcode_ns.marshal_with(barcode_model, code=201)
-#     def post(self):
-#         """Create a new item"""
-#         item = api.payload
-#         item["id"] = len(items_db) + 1
-#         items_db.append(item)
-#         return item, 201
-
-# @storage_ns.route("/")
-# class ItemList(Resource):
-
-#     @storage_ns.marshal_list_with(storage_model)
-#     def get(self):
-#         """Get all storage items"""
-#         return get_item()
-
-#     @storage_ns.expect(storage_model)
-#     @storage_ns.marshal_with(storage_model, code=201)
-#     def post(self):
-#         """Create a new storage item"""
-#         item = api.payload
-#         item["id"] = len(items_db) + 1
-#         items_db.append(item)
-#         return item, 201
-
-# @price_ns.route("/")
-# class ItemList(Resource):
-
-#     @price_ns.marshal_list_with(price_model)
-#     def get(self):
-#         """Get all prices"""
-#         return get_item()
-
-#     @price_ns.expect(price_model)
-#     @price_ns.marshal_with(price_model, code=201)
-#     def post(self):
-#         """Create a new price"""
-#         item = api.payload
-#         item["id"] = len(items_db) + 1
-#         items_db.append(item)
-#         return item, 201
-
-# @sales_ns.route("/")
-# class ItemList(Resource):
-    
-#     @sales_ns.marshal_list_with(sales_model)
-#     def get(self):
-#         """Get all sales"""
-#         return get_item()
-
-#     @sales_ns.expect(sales_model)
-#     @sales_ns.marshal_with(sales_model, code=201)
-#     def post(self):
-#         """Create a new sale"""
-#         item = api.payload
-#         item["id"] = len(items_db) + 1
-#         items_db.append(item)
-#         return item, 201
 
 if __name__ == "__main__":
     app.run(debug=True)
