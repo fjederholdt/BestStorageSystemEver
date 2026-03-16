@@ -116,12 +116,6 @@ def get_insert_cols(table,cols,data):
 
     return(sql_full_string,col_data)
 
-def get_tables_insert(con,tables):
-    #get tables data, get insert with data for table
-
-    for table in tables:
-        print(f"{table}:",get_table(con,table))
-
 def get_insert(con, data):
     schema = all_columns(con)
     table_data = []
@@ -270,19 +264,22 @@ def insert_transit_table(con,data):
             insert_table(con,sql,col_data)
     return 1
 
-# tables: All the tables from which data needs to be transfered
-# prim_key : Probably primary key for identification
-# quantity: Quantity of the item to reserve
-def reserve_data(con,tables,prim_key,prim_key_val,quantity,from_loc,to_loc):
+def get_datatypes(con,table,columns):
+    datatypes = {}
+    for column in columns:
+        datatypes[column] = get_column_data_type(con,table,column)
+    return datatypes
+
+def initiate_reserved_data(prim_key,prim_key_val,quantity,from_loc,to_loc):
     data = {};data[prim_key] = prim_key_val;data["Status"] = "Reserved"
     data["Quantity"] = quantity;data["From_Location"] = from_loc
     data["To_Location"] = to_loc
-    res_con = connect_reserved_db()
+    return data
 
-    insert_data(res_con,get_insert(con,tables))
+def reserve_data(con,prim_key,prim_key_val,quantity,from_loc,to_loc):
+    data = initiate_reserved_data(prim_key,prim_key_val,quantity,from_loc,to_loc)
 
     #Make sure someone does the put call to update the quantity, Does this has to be done from gui?!?!?!
-    
     if type(prim_key_val) is int:
         data_type = "INTEGER"
     elif type(prim_key_val) is str:
@@ -292,21 +289,7 @@ def reserve_data(con,tables,prim_key,prim_key_val,quantity,from_loc,to_loc):
     else:
         print("No datatype")
         quit()
-            
 
-    create_transit_table(res_con,prim_key,data_type)
-    insert_transit_table(res_con,data)
-    close_connection(res_con)
+    create_transit_table(con,prim_key,data_type)
+    insert_transit_table(con,data)
 
-    return 1
-
-con = connect()
-ts = ["Product_Table","Barcode_Table"]
-p_k = "Product_ID"
-pk_val = 12132
-quan = 5
-from_l = "LetMilk"
-to_l  = "myself"
-
-reserve_data(con,ts,p_k,pk_val,quan,from_l,to_l)
-close_connection(con)
