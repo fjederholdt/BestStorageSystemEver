@@ -1,9 +1,18 @@
 import sqlite3
+import os
+from enum import Enum
+
+class Status(Enum):
+    Reserved = 1
+    In_Transit = 2
+    Delievered = 3
+    Recieved = 4
 
 def connect():
+    db_path = os.path.join(os.getcwd(),"Database",os.listdir(os.path.join(os.getcwd(),"Database"))[0])
     try:
-        con = sqlite3.connect("LetMilk.db")
-        print("Connected to database successfully.")
+        con = sqlite3.connect(db_path)
+        print(f"Connected to {db_path} successfully.")
         return con
     except:
         print("Connection to database failed.")
@@ -46,6 +55,7 @@ def insert_table(con, insert_sql, data):
         try:
             c = get_cursor(con)
             c.execute(insert_sql, data)
+            commit(con)
             print("Data inserted successfully.")
         except Exception as e:
             print(f"Error inserting data: {e}")
@@ -94,28 +104,31 @@ def insert_data(con,insert_sql):
         print("No connection to database to insert data.")
         return False
 
+def get_insert_cols(table,cols,data):
+    sql_string = []
+    col_data = []
+    sql_full_string = ""
+
+    sql_string.append(f"INSERT INTO {table} (")
+
+    for col in cols[:-1]:
+        sql_string.append(f"{col},")
+        col_data.append(data[col])
+    sql_string.append(f"{cols[-1]}")
+    col_data.append(data[cols[-1]])
+        
+    sql_string.append(f") VALUES ({"?, " * (len(cols)-1)}?);")
+    for string in sql_string:
+        sql_full_string += str(string)
+
+    return(sql_full_string,col_data)
+
 def get_insert(con, data):
     schema = all_columns(con)
     table_data = []
 
     for table, cols in schema.items():
-        sql_string = []
-        col_data = []
-        sql_full_string = ""
-
-        sql_string.append(f"INSERT INTO {table} (")
-
-        for col in cols[:-1]:
-            sql_string.append(f"{col},")
-            col_data.append(data[col])
-        sql_string.append(f"{cols[-1]}")
-        col_data.append(data[cols[-1]])
-        
-        sql_string.append(f") VALUES ({"?, " * (len(cols)-1)}?);")
-        for string in sql_string:
-            sql_full_string += str(string)
-
-        table_data.append((sql_full_string,col_data))
+        table_data.append(get_insert_cols(table,cols,data))
     
     return table_data
 
@@ -220,13 +233,80 @@ def get_id(con,table,column,id):
         data.append(d)
     return data
   
-def update(con,table,column,val,col_id,val_id):
+def update(con,table,column,column_value,primary_key, primary_key_id):
     if con is not None:
         try:
             cursor = get_cursor(con)
-            cursor.execute(f"UPDATE {table} SET {column} = {val} where {col_id} = {val_id}")
+            cursor.execute(f"UPDATE {table} SET {column} = '{column_value}' where {primary_key} = '{primary_key_id}'")
             commit(con)
         except Exception as e:
             print(f"Error updating: {e}")
     else:
         print("No connection to database while updating")
+
+def connect_reserved_db():
+    try:
+        con = sqlite3.connect(os.path.join(os.getcwd(),"Reserved","Reserved.db"))
+        print("Connected to database successfully.")
+        return con
+    except:
+        print("Connection to database failed.")
+        return None
+    
+def create_transit_table(con,prim_key,data_type):
+    create_table(con,f"""CREATE TABLE IF NOT EXISTS Transit_Table (
+        {prim_key} {data_type} PRIMARY KEY,
+        Status TEXT NOT NULL,
+        Quantity INTEGER NOT NULL,
+        From_Location TEXT NOT NULL,
+        To_Location TEXT NOT NULL
+                                    );""")
+    commit(con)
+
+def insert_transit_table(con,data):
+    schema = all_columns(con)
+    for table,columns in schema.items():
+        if table == "Transit_Table":
+            (sql, col_data) = get_insert_cols(table,columns,data)
+            insert_table(con,sql,col_data)
+    return 1
+
+def get_datatypes(con,table,columns):
+    datatypes = {}
+    for column in columns:
+        datatypes[column] = get_column_data_type(con,table,column)
+    return datatypes
+
+def update_transit(con,status,primary_key, primary_key_id):
+    for s in Status:
+        if s.value == status:
+            update(con, "Transit_Table", "Status", s.name, primary_key, primary_key_id)
+
+def initiate_reserved_data(prim_key,prim_key_val,quantity,from_loc,to_loc):
+    data = {};data[prim_key] = prim_key_val;data["Status"] = "Reserved"
+    data["Quantity"] = quantity;data["From_Location"] = from_loc
+    data["To_Location"] = to_loc
+    return data
+
+def reserve_data(con,prim_key,prim_key_val,quantity,from_loc,to_loc):
+    data = initiate_reserved_data(prim_key,prim_key_val,quantity,from_loc,to_loc)
+
+    #Make sure someone does the put call to update the quantity, Does this has to be done from gui?!?!?!
+    if type(prim_key_val) is int:
+        data_type = "INTEGER"
+    elif type(prim_key_val) is str:
+        data_type = "TEXT"
+    elif type(prim_key_val) is float:
+        data_type = "REAL"
+    else:
+        print("No datatype")
+        quit()
+
+    create_transit_table(con,prim_key,data_type)
+    insert_transit_table(con,data)
+
+con = connect_reserved_db()
+
+#reserve_data(con, "Product_ID", 123123, 5, "hero", "dero")
+update_transit(con,3,"Product_ID",999)
+close_connection(con)

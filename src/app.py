@@ -79,6 +79,14 @@ def update_item():
 def delete_item():
     return "Item deleted successfully"
 
+@app.reserve("/")
+def reserve_item(primary_key, primary_key_id, quantity, from_location, to_location,status):
+    con = db.connect_reserved_db()
+    db.reserve_data(con, primary_key, primary_key_id, quantity, from_location, to_location)
+    db.update_transit(con,status,primary_key,primary_key_id)
+    db.close_connection(con)
+    return "Item reserved successfully"
+
 ''' Call the function to create the API documentation for all the tables and columns in the database.'''
 create_docs()
 
