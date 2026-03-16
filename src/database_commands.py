@@ -1,5 +1,12 @@
 import sqlite3
 import os
+from enum import Enum
+
+class Status(Enum):
+    Reserved = 1
+    In_Transit = 2
+    Delievered = 3
+    Recieved = 4
 
 def connect():
     db_path = os.path.join(os.getcwd(),"Database",os.listdir(os.path.join(os.getcwd(),"Database"))[0])
@@ -226,11 +233,11 @@ def get_id(con,table,column,id):
         data.append(d)
     return data
   
-def update(con,table,column,val,col_id,val_id):
+def update(con,table,column,column_value,primary_key, primary_key_id):
     if con is not None:
         try:
             cursor = get_cursor(con)
-            cursor.execute(f"UPDATE {table} SET {column} = {val} where {col_id} = {val_id}")
+            cursor.execute(f"UPDATE {table} SET {column} = '{column_value}' where {primary_key} = '{primary_key_id}'")
             commit(con)
         except Exception as e:
             print(f"Error updating: {e}")
@@ -270,6 +277,11 @@ def get_datatypes(con,table,columns):
         datatypes[column] = get_column_data_type(con,table,column)
     return datatypes
 
+def update_transit(con,status,primary_key, primary_key_id):
+    for s in Status:
+        if s.value == status:
+            update(con, "Transit_Table", "Status", s.name, primary_key, primary_key_id)
+
 def initiate_reserved_data(prim_key,prim_key_val,quantity,from_loc,to_loc):
     data = {};data[prim_key] = prim_key_val;data["Status"] = "Reserved"
     data["Quantity"] = quantity;data["From_Location"] = from_loc
@@ -293,3 +305,8 @@ def reserve_data(con,prim_key,prim_key_val,quantity,from_loc,to_loc):
     create_transit_table(con,prim_key,data_type)
     insert_transit_table(con,data)
 
+con = connect_reserved_db()
+
+#reserve_data(con, "Product_ID", 123123, 5, "hero", "dero")
+update_transit(con,3,"Product_ID",999)
+close_connection(con)
