@@ -70,7 +70,11 @@ def execute_multi_query(con,insert_sql):
         return 0
 
 def all_columns(con):
-    """Gives the dict tables with their columns
+    """Gives the dict of tables with all columns\n
+    Uses:\n
+    for table in result: [all tables]\n
+    for table, columns in result.items(): [all table and its respective columns]\n
+    result[table]: [all columns of a specific table]
     """
     c = get_cursor(con)
     c.execute("SELECT name FROM sqlite_master WHERE type='table'")
@@ -86,7 +90,7 @@ def all_columns(con):
 # ----------------- GENERATE SQL STRINGS -----------------
 
 def get_insert_cols(table_id, data):
-    """Logic for generating SQL insert query
+    """Logic for generating SQL insert query\n
     Generate specificly for all the columns of a specific table
     """
     cols = [col for col in data]
@@ -113,7 +117,7 @@ def get_insert_cols(table_id, data):
     return(sql_full_string,col_data)
 
 def get_insert(con, data):
-    """Gets sql insert query for all the data
+    """Gets sql insert query for all the data\n
     Returns a tuple of the sql string and the specific column data
     """
     if con is not None:
@@ -126,8 +130,8 @@ def get_insert(con, data):
     return table_data
 
 def update(con,table,column,column_value,primary_key, primary_key_id):
-    """Updates the database(con) at the specific column with a specified value(colume_value)
-    Only regarding the specific item(WHERE primar_key = primary_key_id)
+    """Updates the database(con) at the specific column with a specified value(colume_value)\n
+    Only regards the specific item(WHERE primar_key = primary_key_id)
     """
     if con is not None:
         try:
@@ -183,7 +187,7 @@ def get_cursor(con):
         return None
 
 def get_columns_from_table(con,table):
-    """Gets all columns from a table
+    """Gets all columns from a table\n
     Returns as a list of column names
     """
     if con is not None:
@@ -197,7 +201,7 @@ def get_columns_from_table(con,table):
     return cols
 
 def get_table(con,table):
-    """Gets the data from a specific table
+    """Gets the data from a specific table\n
     Returns all data as a list
     """
     data = []
@@ -216,7 +220,7 @@ def get_table(con,table):
     return data
 
 def get_column(con,table,column):
-    """Gets data from a specific table, from a specific column
+    """Gets data from a specific table, from a specific column\n
     Returns all data concerning the specific column
     """
     if con is not None:
@@ -236,7 +240,7 @@ def get_column(con,table,column):
     return data
 
 def get_id(con,table,column,id):
-    """Gets data from specific table, from specific column, with specific id
+    """Gets data from specific table, from specific column, with specific id\n
     Returns all data concerning the specific id
     """
     if con is not None:
@@ -281,7 +285,7 @@ def get_all_data(con):
     return total
 
 def get_tables_and_columns(schema):
-    """Gets tables and columns from schema
+    """Gets tables and columns from schema\n
     Returns a list of tables and a dict of columns
     """
     if schema is not None:
@@ -315,13 +319,14 @@ def get_column_data_type(con, table, column):
     else:
         print("No connection to database")
     
-def get_datatypes(con,table,columns): 
-    """Get datatypes for all columns in a table
+def get_datatypes(con,table): 
+    """Get datatypes for all columns in a table\n
         Returns dict of columns with their datatype
     """
     if con is not None:
         try:
             datatypes = {}
+            columns = get_columns_from_table(con,table)
             for column in columns:
                 datatypes[column] = get_column_data_type(con,table,column)
         except Exception as e:
@@ -333,7 +338,7 @@ def get_datatypes(con,table,columns):
     return datatypes
 
 def get_primary_key(con, table):
-    """Gets the primary key column (name) of a table
+    """Gets the primary key column of a table
     """
     if con is not None:
         try:
@@ -458,7 +463,7 @@ def initiate_reserved_data(prim_key,prim_key_val,quantity,from_loc,to_loc):
     return data
 
 def reserve_data(con,prim_key,prim_key_val,quantity,from_loc,to_loc):
-    """Reserves the data
+    """Reserves the data\n
     Done by generating and inserting into the Transit Table
     """
     if con is not None:
