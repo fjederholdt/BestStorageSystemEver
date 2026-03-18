@@ -182,18 +182,31 @@ def get_cursor(con):
         print("No connection to database.")
         return None
 
-def get_table(con,table):
-    """Gets the data from a specific table
-    Returns all data conceerning the specific table
+def get_columns_from_table(con,table):
+    """Gets all columns from a table
+    Returns as a list of column names
     """
     if con is not None:
         try:
-            data = []
+            schema = all_columns(con)
+            cols = schema[table]
+        except Exception as e:
+            print(f"Error getting columns from table: {table}, error: {e}")
+    else:
+        print("No connection to database")
+    return cols
+
+def get_table(con,table):
+    """Gets the data from a specific table
+    Returns all data as a list
+    """
+    data = []
+    if con is not None:
+        try:
             cursor = get_cursor(con)
             cursor.execute(f"SELECT * FROM {table}")
             temp_data = cursor.fetchall()
-            for d in temp_data:
-                data.append(d[0])
+            data = temp_data
         except Exception as e:
             print(f"Error getting table data: {e}")
             return 0
