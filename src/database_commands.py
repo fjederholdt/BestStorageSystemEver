@@ -49,6 +49,7 @@ def execute_single_query(con,sql_insert_query):
                 cursor.execute(sql_insert_query[0],sql_insert_query[1])
             else:
                 cursor.execute(sql_insert_query)
+            print("Inserted values into database")
         except Exception as e:
             print(f"Error executing sql query: {sql_insert_query}, error: {e}")
     else:
@@ -84,16 +85,18 @@ def all_columns(con):
 
 # ----------------- GENERATE SQL STRINGS -----------------
 
-def get_insert_cols(table,cols,data):
+def get_insert_cols(table_id, data):
     """Logic for generating SQL insert query
     Generate specificly for all the columns of a specific table
     """
+    cols = [col for col in data]
+
     try:
         sql_string = []
         col_data = []
         sql_full_string = ""
 
-        sql_string.append(f"INSERT INTO {table} (")
+        sql_string.append(f"INSERT INTO {table_id} (")
 
         for col in cols[:-1]:
             sql_string.append(f"{col},")
@@ -118,7 +121,7 @@ def get_insert(con, data):
         table_data = []
 
         for table, cols in schema.items():
-            table_data.append(get_insert_cols(table,cols,data))
+            table_data.append(get_insert_cols(table, data))
         
     return table_data
 
