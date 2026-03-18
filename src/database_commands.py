@@ -142,7 +142,17 @@ def update(con,table,column,column_value,primary_key, primary_key_id):
             print(f"Error updating: {e}")
     else:
         print("No connection to database while updating")
-  
+
+def make_sale(table_id, column_id, primary_key_value, quantity):
+    con = connect()
+    pk = get_primary_key(con, table_id)
+    item_id = get_id(con,table_id,pk,primary_key_value)[0]
+    cols = get_columns_from_table(con,table_id)
+    cur_quantity = item_id[cols.index(column_id)]
+    new_quantity = cur_quantity - int(quantity)
+    update(con,table_id,column_id,new_quantity,pk,primary_key_value)
+    commit(con)
+
 ############## Deletion functions ##############        
 def delete_all_data(con):
     cursor = get_cursor(con)
