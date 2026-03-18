@@ -124,7 +124,7 @@ def get_insert(con, data):
 
 def update(con,table,column,column_value,primary_key, primary_key_id):
     """Updates the database(con) at the specific column with a specified value(colume_value)
-    Only regarding the specific item(WHERE primar_key = primary_key_id)
+    Only regarding the specific item(WHERE primary_key = primary_key_id)
     """
     if con is not None:
         try:

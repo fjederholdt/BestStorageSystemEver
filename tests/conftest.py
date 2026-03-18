@@ -9,7 +9,7 @@ def clear_db_before_each_test(monkeypatch):
     con = sqlite3.connect(":memory:")
     
     # Create the items table in the in-memory database
-    db.create_table(con, """
+    db.execute_single_query(con, """
         CREATE TABLE IF NOT EXISTS items (
             id TEXT PRIMARY KEY,
             title TEXT NOT NULL,

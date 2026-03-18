@@ -7,7 +7,7 @@ import pytest
 import sqlite3
 
 # conftest.py
-import database_commands as db
+from src import database_commands as db
 
 from flask.testing import FlaskClient
 client = app.test_client()
