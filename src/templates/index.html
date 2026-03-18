@@ -8,76 +8,211 @@
 
 <body>
 
-<h1>Database Table Viewer</h1>
-<!--
-<div class="controls">
-     <button onclick="loadDatabase('database1.db')">Use Database 1</button> 
-</div>-->
+<div class="tabs">
+    <button class="tablink" onclick="openTab('storage_system_handler')">Storage System</button>
+    <button class="tablink" onclick="openTab('database_viewer')">Database Viewer</button>
+    <button class="tablink" onclick="openTab('transit_manager')">Transit Manager</button>
+</div>
 
-<table id="dataTable", >
+<div id="storage_system_handler" class="tabcontent">
+    <h1>Storage System Handler</h1>
+    <p>Here you can manage your storage system.</p>
+
+    <div class="crud-buttons">
+        <button onclick="openAddItemDialog()">Add Item</button>
+        <button onclick="updateItem()">Update Item</button>
+        <button onclick="deleteItem()">Delete Item</button>
+        <button onclick="getItems()">Get Items</button>
+        <button onclick="addTable()">Add Table</button>
+        <button onclick="deleteTable()">Delete Table</button>
+        <button onclick="getTables()">Get Tables</button>
+    </div>
+    <script>
+    function openAddItemDialog() {
+        document.getElementById("addItemDialog").showModal();
+    }
+    function updateItem() {
+        // Implement update item logic
+        alert('Update Item clicked');
+    }
+    function deleteItem() {
+        // Implement delete item logic
+        alert('Delete Item clicked');
+    }
+    function getItems() {
+        // Implement get items logic
+        alert('Get Items clicked');
+    }
+    function addTable() {
+        // Implement add table logic
+        alert('Add Table clicked');
+    }
+    function deleteTable() {
+        // Implement delete table logic
+        alert('Delete Table clicked');
+    }
+    function getTables() {
+        // Implement get tables logic
+        alert('Get Tables clicked');
+    }
+    </script>
+</div>
+
+<div id="database_viewer" class="tabcontent">  
+    <h1>Database Table Viewer</h1>
+    
     {%- for table in tables %}
-    <td>{{ table }}
+    <h2>{{ table }}</h2>
+    <div class="table-scroll">
         <table>      
             <tr>    
-                {%- for column in columns[table] %} 
-                
+            {%- for column in columns[table] %} 
                 <th>{{ column }}</th>
-                
-                {%- endfor %}
+            {%- endfor %}
             </tr>
+            {%- for i in range(0, 10) %} 
             <tr>
-
-                 
-                {%- for i in range(0, 10) %} 
-                <tr>
-                {%- for column in columns[table] %} 
-                
-                            <td>{{ total_data[column][i] }}</td>
-                            
-                            
-                            {%- endfor %}
-                        </tr>
-                        {%- endfor %}
-                        
+            {%- for column in columns[table] %} 
+                <td>{{ total_data[column][i] }}</td>
+            {%- endfor %}
             </tr>
-
-            
+            {%- endfor %}
         </table>        
-    </td>
-                
-        
+    </div>
     {%- endfor %}
-</table>
-<!-- 
-<script>
-function loadDatabase(dbName){
+</div>
+
+<dialog id="addItemDialog">
     
-    fetch("/GET")
-    console.log("Selected database:", dbName);
+    <form method="dialog">
+        
+        <label>
+            Choose Table:
+            <select id="actionSelect" onchange="updateInputs()" >
+                <option value="">"Choose a table"</option>"
+                {%- for table in tables %}
+                <option value="{{ table }}">{{ table }}</option>
+                {%- endfor %}
+            </select>
+        </label>
+        
+        {%- for table in tables %}
+        <div id="{{ table }}Inputs" class="hidden">
+        {%- for column in columns[table] %} 
+        <label>
+            {{ column }}:
+            {% set input_type = column_data_types[(table, column)] %}
+            <input id="{{ column }}" type="{{ input_type }}" placeholder="Enter {{input_type}}">
+          
+        </label>
+        {%- endfor %}
+        </div>
+        {%- endfor %}
 
-    // Example mock data (replace with API request)
-    const data = [
-        {id:1, name:"Alice", email:"alice@email.com"},
-        {id:2, name:"Bob", email:"bob@email.com"},
-        {id:3, name:"Charlie", email:"charlie@email.com"}
-    ];
+    <div>
+      <button onclick="closeDialog('addItemDialog')" value="cancel">Cancel</button>
+      <button onclick="addItemToDatabase()" value="submit">Submit</button>
+    </div>
 
-    const tableBody = document.querySelector("#dataTable tbody");
-    tableBody.innerHTML = "";
+  </form>
 
-    data.forEach(row=>{
-        const tr = document.createElement("tr");
+</dialog>
 
-        tr.innerHTML = `
-            <td>${row.id}</td>
-            <td>${row.name}</td>
-            <td>${row.email}</td>
-        `;
+<dialog id="updateItemDialog">
+    
+    <form method="dialog">
+        
+        <label>
+            Choose Table:
+            <select id="actionSelect" onchange="updateInputs()" >
+                <option value="">"Choose a table"</option>"
+                {%- for table in tables %}
+                <option value="{{ table }}">{{ table }}</option>
+                {%- endfor %}
+            </select>
+        </label>
+        
+        {%- for table in tables %}
+        <div id="{{ table }}Inputs" class="hidden">
+        {%- for column in columns[table] %} 
+        <label>
+            {{ column }}:
+            {% set input_type = column_data_types[(table, column)] %}
+            <input id="{{ column }}" type="{{ input_type }}" placeholder="Enter {{input_type}}">
+          
+        </label>
+        {%- endfor %}
+        </div>
+        {%- endfor %}
 
-        tableBody.appendChild(tr);
-    });
-}
-</script> -->
+    <div>
+      <button value="cancel">Cancel</button>
+      <button value="submit">Submit</button>
+    </div>
+
+  </form>
+
+</dialog>
+
+<script>
+    const tableNames = {{tables | tojson}};
+
+    function updateInputs() {
+        
+        let choice = document.getElementById("actionSelect").value;
+        
+        tableNames.forEach(table => {
+            if (table !== choice) {
+                document.getElementById(table + "Inputs").classList.add("hidden");
+            }
+            else {
+                document.getElementById(table + "Inputs").classList.remove("hidden");
+            }
+        })
+    }
+
+    function openTab(tabId) {
+        
+        let contents = document.querySelectorAll(".tabcontent");
+        
+        contents.forEach(tab => {
+            tab.classList.remove("active");
+        });
+        
+        document.getElementById(tabId).classList.add("active");
+    }
+    
+    async function addItemToDatabase(){
+
+        let choice = document.getElementById("actionSelect").value;
+
+        let table_inputs = document.getElementById(choice + "Inputs");
+
+        let inputs = table_inputs.querySelectorAll("input");
+        let data = {};
+        inputs.forEach(input => {
+            data[input.id] = input.value;
+        });
+        
+        console.log(data)
+        await fetch("/"+choice,{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify(data)
+        })
+
+        closeDialog('addItemDialog')
+    }
+
+    function closeDialog(dialogName){
+        document.getElementById(dialogName).close()
+    }
+
+    document.getElementById("storage_system_handler").classList.add("active");
+    // Show first tab by default
+</script>
 
 </body>
 </html>

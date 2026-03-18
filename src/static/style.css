@@ -27,11 +27,64 @@ button:hover{
     background:#1a5fc2;
 }
 
-table{
-    width:100%;
-    border-collapse:collapse;
-    background:white;
+.hidden{
+    display:none;
 }
+
+dialog {
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 2px solid #ccc;
+}
+
+.tablink {
+  padding: 10px 20px;
+  border: none;
+  background: #eee;
+  cursor: pointer;
+}
+
+.tablink:hover {
+  background: #ddd;
+}
+
+.tabcontent {
+  display: none;
+  padding: 20px;
+}
+
+.tabcontent.active {
+  display: block;
+}
+
+.table-scroll{
+    display: inline-block;
+    width:auto;
+    max-height:200px; /* about 5 rows */
+    margin-bottom:20px;
+    overflow:auto;           /* enable scrolling */
+    border-collapse:collapse;
+    border-radius:6px;          /* rounded corners */
+    border:1px solid #ccc;      /* small border */
+    
+}
+
+table{
+    background:white;           /* table background */
+    border-collapse:collapse;
+}
+
 
 th, td{
     padding:12px;
@@ -40,17 +93,12 @@ th, td{
 }
 
 th{
+    position: sticky;
+    top: 0;
     background:#2c7be5;
     color:white;
 }
 
 tr:hover{
     background:#f1f5ff;
-}
-
-table {
-  border-collapse: collapse;
-  border-spacing: 0;
-  width: 100%;
-  border: 1px solid #ddd;
 }

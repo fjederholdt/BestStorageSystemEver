@@ -12,8 +12,24 @@ def home():
     con = db.connect()
     tables, columns = db.get_tables_and_columns(db.all_columns(con))
     total_data = db.get_all_data(con)
+    column_data_types = {}
+    for table in tables:
+        for column in columns[table]:
+            ''' Get the data type of the column, and create a model field for it.'''
+            data_type = db.get_column_data_type(con, table, column)
+            input_type = ""
+            match data_type:
+                case "INTEGER":
+                    input_type = "number"
+                case "REAL":
+                    input_type = "number"
+                case "TEXT":
+                    input_type = "text"
+                case "TIMESTAMP":
+                    input_type = "datetime-local"
+            column_data_types[(table, column)] = input_type
     db.close_connection(con)
-    return render_template("index.html", tables=tables, columns=columns, total_data=total_data )
+    return render_template("index.html", tables=tables, columns=columns, total_data=total_data, column_data_types=column_data_types )
 
 ''' Create the API to handle docs and all the endpoints for the API.'''
 api = Api(
@@ -24,62 +40,70 @@ api = Api(
     doc="/docs"
 )
 
-def create_api_methods():
-    @app.get("/")
-    def get_items(table):
-        ''' Get all items from the table in the database, and return them as a JSON object.'''
-        con = db.connect()
-        result = db.get_table(con, table)
-        db.close_connection(con)
-        return result
+# def create_api_methods():
+#     @app.get("/")
+#     def get_items(table):
+#         ''' Get all items from the table in the database, and return them as a JSON object.'''
+#         con = db.connect()
+#         result = db.get_table(con, table)
+#         db.close_connection(con)
+#         return result
 
-    @app.get("/primary_key")
-    def get_item(table, primary_key):
-        ''' Get a single item with the specified ID from the table in the database, and return it as a JSON object.'''
-        con = db.connect()
-        result = db.get_id(con, table, primary_key)
-        db.close_connection(con)
-        return result
+#     @app.get("/primary_key")
+#     def get_item(table, primary_key):
+#         ''' Get a single item with the specified ID from the table in the database, and return it as a JSON object.'''
+#         con = db.connect()
+#         result = db.get_id(con, table, primary_key)
+#         db.close_connection(con)
+#         return result
 
-    @app.post("/")
-    def post_item(data):
-        ''' Create a new item with the specified ID in the table in the database, and return it as a JSON object.'''
-        con = db.connect()
-        result = db.insert_data(db.get_insert(con, data))
-        db.close_connection(con)
-        return result
+#     # @app.post("/")
+#     # def post_item():
+#     #     ''' Create a new item with the specified ID in the table in the database, and return it as a JSON object.'''
+#     #     con = db.connect()
+#     #     result = db.insert_data(db.get_insert(con, api.payload))
+#     #     db.close_connection(con)
+#     #     return result
 
-    @app.delete("/")
-    def delete_items(table):
-        ''' Delete all items from the table in the database, and return a success message.'''
-        con = db.connect()
-        result = db.delete_table_data(con, table)
-        db.close_connection(con)
-        return result
+#     @app.post("/reserve")
+#     def reserve_item(table, column, column_id, primary_key, primary_key_id, quantity, stock_table_id, quantity_column_id):
+#         ''' Reserve a single item with the specified ID in the table in the database, and return it as a JSON object.'''
+#         con = db.connect()
+#         result = db.reserve(con, table, primary_key)
+#         db.close_connection(con)
+#         return result
+
+#     @app.delete("/")
+#     def delete_items(table):
+#         ''' Delete all items from the table in the database, and return a success message.'''
+#         con = db.connect()
+#         result = db.delete_table_data(con, table)
+#         db.close_connection(con)
+#         return result
     
-    @app.delete("/primary_key")
-    def delete_item(table, primary_key, data):
-        ''' Delete a single item with the specified ID from the table in the database, and return a success message.'''
-        con = db.connect()
-        result = db.delete_id(con, table, primary_key, data)
-        db.close_connection(con)
-        return result
+#     @app.delete("/primary_key")
+#     def delete_item(table, primary_key, data):
+#         ''' Delete a single item with the specified ID from the table in the database, and return a success message.'''
+#         con = db.connect()
+#         result = db.delete_id(con, table, primary_key, data)
+#         db.close_connection(con)
+#         return result
 
-    @app.put("/")
-    def update_item(table, column, column_value, primary_key, data):
-        ''' Update a single item with the specified ID in the table in the database, and return it as a JSON object.'''
-        con = db.connect()
-        result = db.update(con, table=table, column=column, val=column_value, primary_key=primary_key, val_id=data)
-        db.close_connection(con)
-        return result
+#     @app.put("/")
+#     def update_item(table, column, column_id, primary_key, primary_key_id):
+#         ''' Update a single item with the specified ID in the table in the database, and return it as a JSON object.'''
+#         con = db.connect()
+#         result = db.update(con, table=table, column=column, val=column_id, primary_key=primary_key, val_id=primary_key_id)
+#         db.close_connection(con)
+#         return result
     
-    @app.get("/column")
-    def get_column_data(table, column, data):
-        ''' Get all data from the column in the table in the database, and return it as a JSON object.'''
-        con = db.connect()
-        result = db.get_column(con, table, data)
-        db.close_connection(con)
-        return result
+#     @app.get("/column")
+#     def get_column_data(table, column, data):
+#         ''' Get all data from the column in the table in the database, and return it as a JSON object.'''
+#         con = db.connect()
+#         result = db.get_column(con, table, data)
+#         db.close_connection(con)
+#         return result
 
 ''' Create the API documentation for all the tables and columns in the database.'''
 def create_docs():
@@ -114,8 +138,10 @@ def create_docs():
             @namespace.marshal_with(model, code=201)
             def post(self):
                 ''' Create a new item with the specified ID in the table in the database, and return it as a JSON object.'''
-                data = api.payload
-                return db.insert_data(db.get_insert(con, data)), 201
+                con = db.connect()
+                result = db.insert_data(db.get_insert(con, api.payload))
+                db.close_connection(con)
+                return result, 201
 
             @namespace.expect(model)
             @namespace.marshal_list_with(model)
@@ -156,7 +182,7 @@ def create_docs():
     db.close_connection(con)
 
 ''' Call the function to create the API methods for all the tables and columns in the database.'''
-create_api_methods()
+#create_api_methods()
 ''' Call the function to create the API documentation for all the tables and columns in the database.'''
 create_docs()
 

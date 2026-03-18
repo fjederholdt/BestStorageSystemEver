@@ -140,6 +140,16 @@ def delete_all_data(con):
     for table, column in schema.items():
         cursor.execute(f"DELETE FROM {table}")
     commit(con)
+
+def delete_table_data(con, table):
+    cursor = get_cursor(con)
+    cursor.execute(f"DELETE FROM {table}")
+    commit(con)
+
+def delete_id(con, table, column, id):
+    cursor = get_cursor(con)
+    cursor.execute(f"DELETE FROM {table} WHERE {column} = ?", (id,))
+    commit(con)
         
 def get_primary_key(con, table):
     cursor = get_cursor(con)
@@ -220,11 +230,11 @@ def get_id(con,table,column,id):
         data.append(d)
     return data
   
-def update(con,table,column,val,col_id,val_id):
+def update(con,table,column,column_id,primary_key,primary_key_id):
     if con is not None:
         try:
             cursor = get_cursor(con)
-            cursor.execute(f"UPDATE {table} SET {column} = {val} where {col_id} = {val_id}")
+            cursor.execute(f"UPDATE {table} SET {column} = {column_id} where {primary_key} = {primary_key_id}")
             commit(con)
         except Exception as e:
             print(f"Error updating: {e}")
