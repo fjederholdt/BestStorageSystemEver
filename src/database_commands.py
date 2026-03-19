@@ -228,12 +228,17 @@ def get_table(con,table):
     Returns all data as a list
     """
     data = []
+    cols = get_columns_from_table(con,table)
     if con is not None:
         try:
             cursor = get_cursor(con)
             cursor.execute(f"SELECT * FROM {table}")
             temp_data = cursor.fetchall()
-            data = temp_data
+            for entry in temp_data:
+                temp_dict = {}
+                for i,col in enumerate(cols):
+                    temp_dict[col] = entry[i]
+                data.append(temp_dict)
         except Exception as e:
             print(f"Error getting table data: {e}")
             return 0
