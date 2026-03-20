@@ -8,76 +8,285 @@
 
 <body>
 
-<h1>Database Table Viewer</h1>
-<!--
-<div class="controls">
-     <button onclick="loadDatabase('database1.db')">Use Database 1</button> 
-</div>-->
+<div class="tabs">
+    <button class="tablink" onclick="openTab('storage_system_handler')">Storage System</button>
+    <button class="tablink" onclick="openTab('database_viewer')">Database Viewer</button>
+    <button class="tablink" onclick="openTab('transit_manager')">Transit Manager</button>
+</div>
 
-<table id="dataTable", >
-    {%- for table in tables %}
-    <td>{{ table }}
-        <table>      
-            <tr>    
-                {%- for column in columns[table] %} 
-                
-                <th>{{ column }}</th>
-                
-                {%- endfor %}
-            </tr>
-            <tr>
+<div id="storage_system_handler" class="tabcontent">
+    <h1>Storage System Handler</h1>
+    <p>Here you can manage your storage system.</p>
 
-                 
-                {%- for i in range(0, 10) %} 
-                <tr>
-                {%- for column in columns[table] %} 
+    <div class="crud-buttons">
+        <button onclick="openAddItemDialog()">Add Item</button>
+        <button onclick="updateItem()">Update Item</button>
+        <button onclick="deleteItem()">Delete Item</button>
+        <button onclick="getItems()">Get Items</button>
+        <button onclick="addTable()">Add Table</button>
+        <button onclick="deleteTable()">Delete Table</button>
+        <button onclick="getTables()">Get Tables</button>
+    </div>
+    <script>
+    function openAddItemDialog() {
+        updateTables();
+        updateColumns();
+        updateColumnTypes();
+        const dialog = document.createElement("dialog")
+        dialog.id = "addItemDialog";
+            // Create form
+            const form = document.createElement("form");
+            form.method = "dialog";
+
+            const label = document.createElement("label");
+            label.text = "Choose Table:";
+            const select = document.createElement("select");
+            select.id = "actionSelect";
+            select.onchange = "updateInputs()";
+            const initialOption = document.createElement("option");
+            initialOption.text = "Choose a table";
+            select.appendChild(initialOption);
+            tables.forEach(table =>
+                {
+                    const option = document.createElement("option");
+                    option.value = table;
+                    option.text = table;
+                    select.appendChild(option);
+                }
+            )
+            label.appendChild(select);
+            form.appendChild(label);
+
+            tables.forEach(table =>
+                {
+                    const div = document.createElement("div");
+                    table_inputs.id = table+"Inputs";
+                    table_inputs.class = "hidden";
+                    columns.forEach(column => {
+                        const input_label = document.createElement("label");
+                        input_label.text = column;
+                        const input = document.createElement("input");
+                        input.id = column;
+                        input.type = column_types[(talbe,column)];
+                        input.placeholder = "Enter input";
+                        input_label.appendChild(input);
+                        table_inputs.appendChild(input_label);
+                    })
+                    div.appendChild(table_inputs);
+                    form.appendChild(div);
+                }
+            )
+            const div = document.createElement("div");
+            const close = document.createElement("button");
+            close.onclick = "closeDialog('addItemDialog')";
+            close.value = "cancel";
+            close.text = "Cancel";
+            div.appendChild(close);
+            const submit = document.createElement("button");
+            submit.onclick = "addItemToDatabase()";
+            submit.value = "submit";
+            submit.text = "Submit";
+            div.appendChild(submit);
+            form.appendChild(div);
+
+            dialog.appendChild(form);
+            dialog.show();
+    }
+    function updateItem() {
+        
+        // Implement update item logic
+        alert('Update Item clicked');
+    }
+    function deleteItem() {
+        // Implement delete item logic
+        alert('Delete Item clicked');
+    }
+    function getItems() {
+        // Implement get items logic
+        alert('Get Items clicked');
+    }
+    function addTable() {
+        // Implement add table logic
+        alert('Add Table clicked');
+    }
+    function deleteTable() {
+        // Implement delete table logic
+        alert('Delete Table clicked');
+    }
+    function getTables() {
+        // Implement get tables logic
+        alert('Get Tables clicked');
+    }
+    </script>
+</div>
+
+<div id="database_viewer" class="tabcontent">      
+</div>
+
+<dialog id="updateItemDialog">
+    
+    <form method="dialog">
+        
+        <label>
+            Choose Table:
+            <select id="actionSelect" onchange="updateInputs()" >
+                <option value="">"Choose a table"</option>"
                 
-                            <td>{{ total_data[column][i] }}</td>
-                            
-                            
-                            {%- endfor %}
-                        </tr>
-                        {%- endfor %}
-                        
-            </tr>
+                <option value="{{ table }}">{{ table }}</option>
+                
+            </select>
+        </label>
+        
+        
+        <div id="{{ table }}Inputs" class="hidden">
+        
+        <label>
+            {{ column }}:
+            
+            <input id="{{ column }}" type="{{ input_type }}" placeholder="Enter {{input_type}}">
+          
+        </label>
+        
+        </div>
+        
+
+    <div>
+      <button value="cancel">Cancel</button>
+      <button value="submit">Submit</button>
+    </div>
+
+  </form>
+
+</dialog>
+
+<script>
+    let tables = [];
+    let columns = [];
+    let column_types = {};
+    function updateTables() {
+        fetch("/api/tables").then(response => response.json()).then(data => {tables=data;})
+    }
+    function updateColumns() {
+        fetch("/api/columns").then(response => response.json()).then(data => {columns=data;})
+    }
+    function updateColumnTypes(){
+        fetch("/api/column_types").then(response => response.json()).then(data => {column_types=data;})
+    }
+
+    function updateInputs() {
+        
+        let choice = document.getElementById("actionSelect").value;
+        
+        tables.forEach(table => {
+            if (table !== choice) {
+                document.getElementById(table + "Inputs").classList.add("hidden");
+            }
+            else {
+                document.getElementById(table + "Inputs").classList.remove("hidden");
+            }
+        })
+    }
+
+    function openTab(tabId) {
+        
+        let contents = document.querySelectorAll(".tabcontent");
+        
+        contents.forEach(tab => {
+            tab.classList.remove("active");
+        });
+        
+        if (tabId === "database_viewer") {
+            updateTables();
+            const tableList = document.getElementById("database_viewer");
+            // Clear previous tables
+            tableList.innerHTML = "";
+            tables.forEach(table => {
+                getTableData(table);
+            })
+        }
+        document.getElementById(tabId).classList.add("active");
+    }
+
+    async function getTableData(tableName) {
+        fetch("/"+tableName).then(response => response.json()).then(data => {
 
             
-        </table>        
-    </td>
-                
-        
-    {%- endfor %}
-</table>
-<!-- 
-<script>
-function loadDatabase(dbName){
+            const tableList = document.getElementById("database_viewer");
+
+            const container = document.createElement("div");
+            container.className = "table-scroll";
+            
+            // Create table
+            const table = document.createElement("table");
+            const thead = document.createElement("thead");
+            const tbody = document.createElement("tbody");
+            
+            // Create header
+            const headerRow = document.createElement("tr");
+            Object.keys(data[0]).forEach(key => {
+                const th = document.createElement("th");
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            
+            // Create body rows
+            data.forEach(row => {
+                const tr = document.createElement("tr");
+                Object.values(row).forEach(value => {
+                    const td = document.createElement("td");
+                    td.textContent = value;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            container.appendChild(table);
+            tableList.appendChild(container);
+        })
+
+    }
     
-    fetch("/GET")
-    console.log("Selected database:", dbName);
+    async function addItemToDatabase(){
 
-    // Example mock data (replace with API request)
-    const data = [
-        {id:1, name:"Alice", email:"alice@email.com"},
-        {id:2, name:"Bob", email:"bob@email.com"},
-        {id:3, name:"Charlie", email:"charlie@email.com"}
-    ];
+        let choice = document.getElementById("actionSelect").value;
 
-    const tableBody = document.querySelector("#dataTable tbody");
-    tableBody.innerHTML = "";
+        const payload = collectData(choice)
+        
+        await fetch("/"+choice,{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify(payload)
+        })
 
-    data.forEach(row=>{
-        const tr = document.createElement("tr");
+        closeDialog('addItemDialog')
+    }
 
-        tr.innerHTML = `
-            <td>${row.id}</td>
-            <td>${row.name}</td>
-            <td>${row.email}</td>
-        `;
+    function collectData(table){
+        const container = document.getElementById(table+"Inputs")
 
-        tableBody.appendChild(tr);
-    });
-}
-</script> -->
+        const fields = container.querySelectorAll("input")
+
+        const data = {}
+
+        fields.forEach(field => {
+            data[field.id] = field.value
+        })
+
+        return data
+    }
+
+    function closeDialog(dialogName){
+        document.getElementById(dialogName).close()
+    }
+
+    document.getElementById("storage_system_handler").classList.add("active");
+    // Show first tab by default
+</script>
 
 </body>
 </html>
