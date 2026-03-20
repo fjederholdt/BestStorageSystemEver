@@ -29,9 +29,71 @@
     </div>
     <script>
     function openAddItemDialog() {
-        document.getElementById("addItemDialog").showModal();
+        updateTables();
+        updateColumns();
+        updateColumnTypes();
+        const dialog = document.createElement("dialog")
+        dialog.id = "addItemDialog";
+            // Create form
+            const form = document.createElement("form");
+            form.method = "dialog";
+
+            const label = document.createElement("label");
+            label.text = "Choose Table:";
+            const select = document.createElement("select");
+            select.id = "actionSelect";
+            select.onchange = "updateInputs()";
+            const initialOption = document.createElement("option");
+            initialOption.text = "Choose a table";
+            select.appendChild(initialOption);
+            tables.forEach(table =>
+                {
+                    const option = document.createElement("option");
+                    option.value = table;
+                    option.text = table;
+                    select.appendChild(option);
+                }
+            )
+            label.appendChild(select);
+            form.appendChild(label);
+
+            tables.forEach(table =>
+                {
+                    const div = document.createElement("div");
+                    table_inputs.id = table+"Inputs";
+                    table_inputs.class = "hidden";
+                    columns.forEach(column => {
+                        const input_label = document.createElement("label");
+                        input_label.text = column;
+                        const input = document.createElement("input");
+                        input.id = column;
+                        input.type = column_types[(talbe,column)];
+                        input.placeholder = "Enter input";
+                        input_label.appendChild(input);
+                        table_inputs.appendChild(input_label);
+                    })
+                    div.appendChild(table_inputs);
+                    form.appendChild(div);
+                }
+            )
+            const div = document.createElement("div");
+            const close = document.createElement("button");
+            close.onclick = "closeDialog('addItemDialog')";
+            close.value = "cancel";
+            close.text = "Cancel";
+            div.appendChild(close);
+            const submit = document.createElement("button");
+            submit.onclick = "addItemToDatabase()";
+            submit.value = "submit";
+            submit.text = "Submit";
+            div.appendChild(submit);
+            form.appendChild(div);
+
+            dialog.appendChild(form);
+            dialog.show();
     }
     function updateItem() {
+        
         // Implement update item logic
         alert('Update Item clicked');
     }
@@ -58,65 +120,8 @@
     </script>
 </div>
 
-<div id="database_viewer" class="tabcontent">  
-    <h1>Database Table Viewer</h1>
-    
-    {%- for table in tables %}
-    <h2>{{ table }}</h2>
-    <div class="table-scroll">
-        <table>      
-            <tr>    
-            {%- for column in columns[table] %} 
-                <th>{{ column }}</th>
-            {%- endfor %}
-            </tr>
-            {%- for i in range(0, 10) %} 
-            <tr>
-            {%- for column in columns[table] %} 
-                <td>{{ total_data[column][i] }}</td>
-            {%- endfor %}
-            </tr>
-            {%- endfor %}
-        </table>        
-    </div>
-    {%- endfor %}
+<div id="database_viewer" class="tabcontent">      
 </div>
-
-<dialog id="addItemDialog">
-    
-    <form method="dialog">
-        
-        <label>
-            Choose Table:
-            <select id="actionSelect" onchange="updateInputs()" >
-                <option value="">"Choose a table"</option>"
-                {%- for table in tables %}
-                <option value="{{ table }}">{{ table }}</option>
-                {%- endfor %}
-            </select>
-        </label>
-        
-        {%- for table in tables %}
-        <div id="{{ table }}Inputs" class="hidden">
-        {%- for column in columns[table] %} 
-        <label>
-            {{ column }}:
-            {% set input_type = column_data_types[(table, column)] %}
-            <input id="{{ column }}" type="{{ input_type }}" placeholder="Enter {{input_type}}">
-          
-        </label>
-        {%- endfor %}
-        </div>
-        {%- endfor %}
-
-    <div>
-      <button onclick="closeDialog('addItemDialog')" value="cancel">Cancel</button>
-      <button onclick="addItemToDatabase()" value="submit">Submit</button>
-    </div>
-
-  </form>
-
-</dialog>
 
 <dialog id="updateItemDialog">
     
@@ -126,24 +131,24 @@
             Choose Table:
             <select id="actionSelect" onchange="updateInputs()" >
                 <option value="">"Choose a table"</option>"
-                {%- for table in tables %}
+                
                 <option value="{{ table }}">{{ table }}</option>
-                {%- endfor %}
+                
             </select>
         </label>
         
-        {%- for table in tables %}
+        
         <div id="{{ table }}Inputs" class="hidden">
-        {%- for column in columns[table] %} 
+        
         <label>
             {{ column }}:
-            {% set input_type = column_data_types[(table, column)] %}
+            
             <input id="{{ column }}" type="{{ input_type }}" placeholder="Enter {{input_type}}">
           
         </label>
-        {%- endfor %}
+        
         </div>
-        {%- endfor %}
+        
 
     <div>
       <button value="cancel">Cancel</button>
@@ -155,13 +160,24 @@
 </dialog>
 
 <script>
-    const tableNames = {{tables | tojson}};
+    let tables = [];
+    let columns = [];
+    let column_types = {};
+    function updateTables() {
+        fetch("/api/tables").then(response => response.json()).then(data => {tables=data;})
+    }
+    function updateColumns() {
+        fetch("/api/columns").then(response => response.json()).then(data => {columns=data;})
+    }
+    function updateColumnTypes(){
+        fetch("/api/column_types").then(response => response.json()).then(data => {column_types=data;})
+    }
 
     function updateInputs() {
         
         let choice = document.getElementById("actionSelect").value;
         
-        tableNames.forEach(table => {
+        tables.forEach(table => {
             if (table !== choice) {
                 document.getElementById(table + "Inputs").classList.add("hidden");
             }
@@ -179,31 +195,89 @@
             tab.classList.remove("active");
         });
         
+        if (tabId === "database_viewer") {
+            updateTables();
+            const tableList = document.getElementById("database_viewer");
+            // Clear previous tables
+            tableList.innerHTML = "";
+            tables.forEach(table => {
+                getTableData(table);
+            })
+        }
         document.getElementById(tabId).classList.add("active");
+    }
+
+    async function getTableData(tableName) {
+        fetch("/"+tableName).then(response => response.json()).then(data => {
+
+            
+            const tableList = document.getElementById("database_viewer");
+
+            const container = document.createElement("div");
+            container.className = "table-scroll";
+            
+            // Create table
+            const table = document.createElement("table");
+            const thead = document.createElement("thead");
+            const tbody = document.createElement("tbody");
+            
+            // Create header
+            const headerRow = document.createElement("tr");
+            Object.keys(data[0]).forEach(key => {
+                const th = document.createElement("th");
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            
+            // Create body rows
+            data.forEach(row => {
+                const tr = document.createElement("tr");
+                Object.values(row).forEach(value => {
+                    const td = document.createElement("td");
+                    td.textContent = value;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            container.appendChild(table);
+            tableList.appendChild(container);
+        })
+
     }
     
     async function addItemToDatabase(){
 
         let choice = document.getElementById("actionSelect").value;
 
-        let table_inputs = document.getElementById(choice + "Inputs");
-
-        let inputs = table_inputs.querySelectorAll("input");
-        let data = {};
-        inputs.forEach(input => {
-            data[input.id] = input.value;
-        });
+        const payload = collectData(choice)
         
-        console.log(data)
         await fetch("/"+choice,{
             method:"POST",
             headers:{
                 "Content-Type":"application/json"
             },
-            body:JSON.stringify(data)
+            body:JSON.stringify(payload)
         })
 
         closeDialog('addItemDialog')
+    }
+
+    function collectData(table){
+        const container = document.getElementById(table+"Inputs")
+
+        const fields = container.querySelectorAll("input")
+
+        const data = {}
+
+        fields.forEach(field => {
+            data[field.id] = field.value
+        })
+
+        return data
     }
 
     function closeDialog(dialogName){

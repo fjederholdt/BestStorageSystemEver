@@ -14,7 +14,7 @@ def connect():
     """
     db_path = os.path.join(os.getcwd(),"Database",os.listdir(os.path.join(os.getcwd(),"Database"))[0])
     try:
-        con = sqlite3.connect(db_path)
+        con = sqlite3.connect(db_path, cached_statements=0)
         print(f"Connected to {db_path} successfully.")
         return con
     except:
@@ -84,29 +84,35 @@ def all_columns(con):
 
 # ----------------- GENERATE SQL STRINGS -----------------
 
-def get_insert_cols(table,cols,data):
+def get_insert_cols(table_id, data, cols = None, con = None):
     """Logic for generating SQL insert query
     Generate specificly for all the columns of a specific table
+    If you dont have cols, give con
     """
+    if cols is None:
+        schema = all_columns(con)
+        for table, columns in schema.items():
+            if table_id == table:
+                cols = columns
     try:
         sql_string = []
         col_data = []
         sql_full_string = ""
-
-        sql_string.append(f"INSERT INTO {table} (")
-
+ 
+        sql_string.append(f"INSERT INTO {table_id} (")
+ 
         for col in cols[:-1]:
             sql_string.append(f"{col},")
             col_data.append(data[col])
         sql_string.append(f"{cols[-1]}")
         col_data.append(data[cols[-1]])
-            
+           
         sql_string.append(f") VALUES ({"?, " * (len(cols)-1)}?);")
         for string in sql_string:
             sql_full_string += str(string)
     except Exception as e:
         print(f"Error generating sql insert querey for cols: {e}")
-
+ 
     return(sql_full_string,col_data)
 
 def get_insert(con, data):
@@ -116,11 +122,24 @@ def get_insert(con, data):
     if con is not None:
         schema = all_columns(con)
         table_data = []
-
+ 
         for table, cols in schema.items():
-            table_data.append(get_insert_cols(table,cols,data))
-        
+            table_data.append(get_insert_cols(table, data, cols = cols))
+       
     return table_data
+
+def put(con, table_id, pk_id, data):
+    if con is not None:
+        try:
+            pk = get_primary_key(con, table_id)
+            cols = get_columns_from_table(con,table_id)
+            for col in cols:
+                update(con,table_id,col,data[col],pk,pk_id)
+                print("Updated all")
+        except Exception as e:
+            print(f"Error doing put: {e}")
+    else:
+        print("No Connection")
 
 def update(con,table,column,column_value,primary_key, primary_key_id):
     """Updates the database(con) at the specific column with a specified value(colume_value)
@@ -143,7 +162,7 @@ def delete_all_data(con):
     for table, column in schema.items():
         cursor.execute(f"DELETE FROM {table}")
     commit(con)
-    
+
 def delete_table_data(con, table):
     cursor = get_cursor(con)
     cursor.execute(f"DELETE FROM {table}")
@@ -190,17 +209,21 @@ def get_cursor(con):
         return None
 
 def get_table(con,table):
-    """Gets the data from a specific table
-    Returns all data conceerning the specific table
+    """Gets the data from a specific table\n
+    Returns all data as a list
     """
+    data = []
+    cols = get_columns_from_table(con,table)
     if con is not None:
         try:
-            data = []
             cursor = get_cursor(con)
             cursor.execute(f"SELECT * FROM {table}")
             temp_data = cursor.fetchall()
-            for d in temp_data:
-                data.append(d[0])
+            for entry in temp_data:
+                temp_dict = {}
+                for i,col in enumerate(cols):
+                    temp_dict[col] = entry[i]
+                data.append(temp_dict)
         except Exception as e:
             print(f"Error getting table data: {e}")
             return 0
@@ -236,11 +259,15 @@ def get_id(con,table,column,id):
     if con is not None:
         try:
             data = []
+            cols = get_columns_from_table(con,table)
             cursor = get_cursor(con)
             cursor.execute(f"SELECT * FROM {table} WHERE {column} = '{id}'")
             temp_data = cursor.fetchall()
-            for d in temp_data:
-                data.append(d)
+            for entry in temp_data:
+                temp_dict = {}
+                for i,col in enumerate(cols):
+                    temp_dict[col] = entry[i]
+                data.append(temp_dict)
         except Exception as e:
             print(f"Error getting id data: {e}")
             return 0
@@ -273,6 +300,20 @@ def get_all_data(con):
         print("No connection to database")
         return 0
     return total
+
+def get_columns_from_table(con,table):
+    """Gets all columns from a table\n
+    Returns as a list of column names
+    """
+    if con is not None:
+        try:
+            schema = all_columns(con)
+            cols = schema[table]
+        except Exception as e:
+            print(f"Error getting columns from table: {table}, error: {e}")
+    else:
+        print("No connection to database")
+    return cols
 
 def get_tables_and_columns(schema):
     """Gets tables and columns from schema
